@@ -30,16 +30,15 @@ using namespace std;
 TemplateArg::TemplateArg(C2FFIASTConsumer* ast, const clang::TemplateArgument& arg)
     : _type(NULL), _has_val(false), _val("")
 {
-
     if(arg.getKind() == clang::TemplateArgument::Type)
         _type = Type::make_type(ast, arg.getAsType().getTypePtrOrNull());
     else if(arg.getKind() == clang::TemplateArgument::Integral) {
         _has_val = true;
-        _val     = arg.getAsIntegral().toString(10);
+	arg.getAsIntegral().toString(_val, 10);
         _type    = Type::make_type(ast, arg.getIntegralType().getTypePtrOrNull());
     } else if(arg.getKind() == clang::TemplateArgument::Declaration) {
         _has_val = true;
-        _val     = arg.getAsDecl()->getNameAsString();
+        arg.getAsDecl()->getNameAsString();
         _type    = Type::make_type(ast, arg.getAsDecl()->getType().getTypePtrOrNull());
     } else if(arg.getKind() == clang::TemplateArgument::Expression) {
         const clang::ASTContext& ctx  = ast->ci().getASTContext();
@@ -53,7 +52,7 @@ TemplateArg::TemplateArg(C2FFIASTConsumer* ast, const clang::TemplateArgument& a
 
             if(r.Val.isInt()) {
                 _has_val = true;
-                _val     = r.Val.getInt().toString(10);
+                r.Val.getInt().toString(_val, 10);
             }
         }
     } else {
@@ -98,10 +97,13 @@ void C2FFIASTConsumer::write_template(
 
         const clang::TemplateArgument& arg = arglist[i];
 
+        llvm::SmallString<64> str;
+
         if(arg.getKind() == clang::TemplateArgument::Type)
             out << arg.getAsType().getAsString();
         else if(arg.getKind() == clang::TemplateArgument::Integral) {
-            out << arg.getAsIntegral().toString(10);
+	    arg.getAsIntegral().toString(str, 10);
+	    out << str.c_str();
         } else if(arg.getKind() == clang::TemplateArgument::Declaration) {
             out << arg.getAsDecl()->getNameAsString();
         } else if(arg.getKind() == clang::TemplateArgument::Expression) {
@@ -111,8 +113,10 @@ void C2FFIASTConsumer::write_template(
             if(expr->isEvaluatable(ctx)) {
                 clang::Expr::EvalResult r;
                 expr->EvaluateAsInt(r, ctx);
-                if(r.Val.isInt())
-                    out << r.Val.getInt().toString(10);
+                if(r.Val.isInt()) {
+                    r.Val.getInt().toString(str, 10);
+		    out << str.c_str();
+		}
             }
         } else {
             out << "?" << arg.getKind() << "?";

@@ -88,6 +88,12 @@ namespace c2ffi {
             return ss.str();
         }
 
+        std::string qstr(llvm::SmallString<64> v) {
+            std::stringstream ss;
+            ss << '"' << escape_string(v.c_str()) << '"';
+            return ss.str();
+        }
+
         void write_fields(const NameTypeVector &fields) {
             os() << '[';
             for(NameTypeVector::const_iterator i = fields.begin();

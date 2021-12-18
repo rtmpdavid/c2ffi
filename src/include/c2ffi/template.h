@@ -35,14 +35,14 @@ namespace c2ffi {
     class TemplateArg {
         Type *_type;
         bool _has_val;
-        std::string _val;
+        llvm::SmallString<64> _val;
 
     public:
         TemplateArg(C2FFIASTConsumer *ast,
                     const clang::TemplateArgument &arg);
         bool has_val() const { return _has_val; }
         const Type* type() const { return _type; }
-        const std::string& val() const { return _val; }
+        const llvm::SmallString<64>& val() const { return _val; }
     };
 
     typedef std::vector<TemplateArg*> TemplateArgVector;
